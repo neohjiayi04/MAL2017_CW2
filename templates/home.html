@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trails Service REST API</title>
+</head>
+<body>
+    <h1>Trails</h1>
+    <ul>
+    {% for trail in trails %}
+        <li>{{ trail.trail_name }} - {{ trail.description }}</li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
