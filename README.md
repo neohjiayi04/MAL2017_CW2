@@ -1,13 +1,16 @@
 # TrailService Microservice API
 
 **Student ID:** BSSE2506008
+
 **Module:** MAL2017 Information Management & Retrieval  
+
 **Assessment:** Coursework 2 -  Report on Micro-service Implementation
 
 ## Project Description
 This microservice provides RESTful API endpoints for managing hiking trails as part of a larger wellbeing trail application. It implements full CRUD operations with authentication integration.
 
 ## Features
+
 - ✅ Full CRUD operations on trails, users, features
 - ✅ Authentication integration with external API
 - ✅ Role-based visibility (full/limited)
@@ -34,6 +37,7 @@ The database uses schema `CW2` with the following tables:
 - Trail_Log (audit table)
 
 ## Installation
+
 1. Install dependencies:
 pip install -r requirements.txt
 
@@ -48,6 +52,7 @@ python app.py
 ](http://127.0.0.1:5000/ui/)
 
 ## API Endpoints
+
 ### Trails
 - `GET /trails` - List all trails
 - `GET /trails/{id}` - Get specific trail
@@ -56,7 +61,9 @@ python app.py
 - `DELETE /trails/{id}` - Delete trail (requires auth + ownership)
 ### Similar endpoints for Users, Features, Trail_Features
 
+
 ## Testing
+
 Use Swagger UI at `http://localhost:5000/ui` to test all endpoints interactively.
 
 ## Report
