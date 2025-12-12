@@ -1,28 +1,29 @@
-🗺️ **TrailService Microservice API** 🏞️
+# TrailService Microservice API
 
-**Module**: MAL2017 Information Management & Retrieval
-Assessment 2: Report on Micro-service Implementation
-**Student ID**: BSSE2506008
-A microservice providing RESTful API endpoints for managing hiking trails within a wellbeing trail application. The service supports full CRUD operations, authentication, and audit logging, following REST and OpenAPI design principles.
+**Student ID:** BSSE2506008
+**Module:** MAL2017 Information Management & Retrieval  
+**Assessment:** Coursework 2 -  Report on Micro-service Implementation
 
-📌 **Features**
-✔️ Full CRUD operations for Trails, Users, Features, and Trail_Features
-✔️ External authentication integration
-✔️ Role-based visibility control (full / limited)
-✔️ Many-to-many Trail ↔ Feature relationship
-✔️ Automatic audit entries (Trail_Log) via SQL trigger
-✔️ OpenAPI/Swagger documentation with interactive testing
-✔️ SQLAlchemy ORM + Marshmallow validation
+## Project Description
+This microservice provides RESTful API endpoints for managing hiking trails as part of a larger wellbeing trail application. It implements full CRUD operations with authentication integration.
 
-🧰 **Technology Stack**
-**Backend**: Python 3.x, Flask, Connexion
-**Database**:	Microsoft SQL Server
-**ORM**:	SQLAlchemy
-**Validation**:	Marshmallow
-**Documentation**:	OpenAPI / Swagger UI
+## Features
+- ✅ Full CRUD operations on trails, users, features
+- ✅ Authentication integration with external API
+- ✅ Role-based visibility (full/limited)
+- ✅ Many-to-many relationship (trails-features)
+- ✅ Audit trail logging
+- ✅ RESTful API with Swagger documentation
 
-🗄️ **Database Schema Overview**
-The microservice uses schema CW2 containing:
+## Technology Stack
+- **Backend:** Python 3.x, Flask, Connexion
+- **Database:** Microsoft SQL Server
+- **ORM:** SQLAlchemy
+- **Validation:** Marshmallow
+- **Documentation:** OpenAPI/Swagger
+
+## Database Schema
+The database uses schema `CW2` with the following tables:
 - Users
 - Location
 - Route
@@ -30,16 +31,24 @@ The microservice uses schema CW2 containing:
 - Feature
 - Trail
 - Trail_Feature (junction table)
-- Trail_Log (audit table via trigger)
-A logging trigger inserts entries into Trail_Log whenever a new trail is created.
+- Trail_Log (audit table)
 
-🚀 **Installation & Setup**
-1.**Install dependencies**: pip install -r requirements.txt
-2. **Set up the database**: python build_database.py
-3. **Start the application**: python app.py
-4. **Access interactive API documentation**: http://127.0.0.1:5000
+## Installation
+1. Install dependencies:
+pip install -r requirements.txt
 
-🔗 **API Endpoints Overview**
+2. Set up database:
+run `python build_database.py`
+
+3. Start the application:
+python app.py
+
+4. Access Swagger UI:
+[http://localhost:5000/ui
+](http://127.0.0.1:5000/ui/)
+
+## API Endpoints
+### Trails
 - `GET /trails` - List all trails
 - `GET /trails/{id}` - Get specific trail
 - `POST /trails` - Create trail (requires auth)
@@ -48,7 +57,7 @@ A logging trigger inserts entries into Trail_Log whenever a new trail is created
 ### Similar endpoints for Users, Features, Trail_Features
 
 ## Testing
-Use Swagger UI to test all endpoints interactively.
+Use Swagger UI at `http://localhost:5000/ui` to test all endpoints interactively.
 
 ## Report
 Full documentation available in the assessment report PDF.
