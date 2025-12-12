@@ -9,23 +9,28 @@
 ## Project Description
 This microservice provides RESTful API endpoints for managing hiking trails as part of a larger wellbeing trail application. It implements full CRUD operations with authentication integration.
 
-## Features
+## 📌 Features
 
 ✅ Full CRUD operations on trails, users, features
+
 ✅ Authentication integration with external API
+
 ✅ Role-based visibility (full/limited)
+
 ✅ Many-to-many relationship (trails-features)
+
 ✅ Audit trail logging
+
 ✅ RESTful API with Swagger documentation
 
-## Technology Stack
+## 🧰 Technology Stack
 - **Backend:** Python 3.x, Flask, Connexion
 - **Database:** Microsoft SQL Server
 - **ORM:** SQLAlchemy
 - **Validation:** Marshmallow
 - **Documentation:** OpenAPI/Swagger
 
-## Database Schema
+## 🗄️ Database Schema
 The database uses schema `CW2` with the following tables:
 - Users
 - Location
@@ -36,7 +41,7 @@ The database uses schema `CW2` with the following tables:
 - Trail_Feature (junction table)
 - Trail_Log (audit table)
 
-## Installation
+## 🚀 Installation & Setup
 
 1. Install dependencies:
 pip install -r requirements.txt
@@ -51,7 +56,7 @@ python app.py
 [http://localhost:5000/ui
 ](http://127.0.0.1:5000/ui/)
 
-## API Endpoints
+## 🔗 API Endpoints
 
 ### Trails
 - `GET /trails` - List all trails
@@ -63,12 +68,12 @@ python app.py
 Similar endpoints for Users, Features, Trail_Features
 
 
-## Testing
+## 🛠️Testing
 
 Use Swagger UI at `http://localhost:5000/ui` to test all endpoints interactively.
 
-## Report
+## ✒️ Report
 Full documentation available in the assessment report PDF.
 
-## License
+## 📄 License
 This project is created for educational purposes as part of university coursework.
