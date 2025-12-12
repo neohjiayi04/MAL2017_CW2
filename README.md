@@ -11,12 +11,12 @@ This microservice provides RESTful API endpoints for managing hiking trails as p
 
 ## Features
 
-- ✅ Full CRUD operations on trails, users, features
-- ✅ Authentication integration with external API
-- ✅ Role-based visibility (full/limited)
-- ✅ Many-to-many relationship (trails-features)
-- ✅ Audit trail logging
-- ✅ RESTful API with Swagger documentation
+✅ Full CRUD operations on trails, users, features
+✅ Authentication integration with external API
+✅ Role-based visibility (full/limited)
+✅ Many-to-many relationship (trails-features)
+✅ Audit trail logging
+✅ RESTful API with Swagger documentation
 
 ## Technology Stack
 - **Backend:** Python 3.x, Flask, Connexion
@@ -59,7 +59,8 @@ python app.py
 - `POST /trails` - Create trail (requires auth)
 - `PUT /trails/{id}` - Update trail (requires auth + ownership)
 - `DELETE /trails/{id}` - Delete trail (requires auth + ownership)
-### Similar endpoints for Users, Features, Trail_Features
+  
+Similar endpoints for Users, Features, Trail_Features
 
 
 ## Testing
