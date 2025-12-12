@@ -6,8 +6,10 @@
 
 **Assessment:** Coursework 2 -  Report on Micro-service Implementation
 
+
 ## Project Description
 This microservice provides RESTful API endpoints for managing hiking trails as part of a larger wellbeing trail application. It implements full CRUD operations with authentication integration.
+
 
 ## 📌 Features
 
@@ -23,12 +25,14 @@ This microservice provides RESTful API endpoints for managing hiking trails as p
 
 ✅ RESTful API with Swagger documentation
 
+
 ## 🧰 Technology Stack
 - **Backend:** Python 3.x, Flask, Connexion
 - **Database:** Microsoft SQL Server
 - **ORM:** SQLAlchemy
 - **Validation:** Marshmallow
 - **Documentation:** OpenAPI/Swagger
+
 
 ## 🗄️ Database Schema
 The database uses schema `CW2` with the following tables:
@@ -40,6 +44,7 @@ The database uses schema `CW2` with the following tables:
 - Trail
 - Trail_Feature (junction table)
 - Trail_Log (audit table)
+
 
 ## 🚀 Installation & Setup
 
@@ -56,6 +61,7 @@ python app.py
 [http://localhost:5000/ui
 ](http://127.0.0.1:5000/ui/)
 
+
 ## 🔗 API Endpoints
 
 ### Trails
@@ -69,11 +75,12 @@ Similar endpoints for Users, Features, Trail_Features
 
 
 ## 🛠️Testing
-
 Use Swagger UI at `http://localhost:5000/ui` to test all endpoints interactively.
+
 
 ## ✒️ Report
 Full documentation available in the assessment report PDF.
+
 
 ## 📄 License
 This project is created for educational purposes as part of university coursework.
