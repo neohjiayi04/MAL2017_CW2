@@ -1,352 +1,383 @@
 openapi: 3.0.0
 info:
-  title: CW2 Trail API
-  version: "1.0"
-  description: Microservice for managing trail data
+  title: TrailService API
+  version: 1.0.0
+  description: API for managing Trails, Features, and Users.
 
 servers:
-  - url: http://localhost:5000
-    description: Development server
-
-tags:
-  - name: Trails
-    description: Operations related to trails
-  - name: Users
-    description: Operations related to users
-  - name: Features
-    description: Operations related to features
-  - name: Trail Features
-    description: Operations related to trail-feature links
+  - url: /
 
 paths:
   /trails:
     get:
-      tags:
-        - Trails
-      operationId: trails.read_all
+      tags: [Trails]
       summary: Get all trails
+      operationId: trails.get_trails
       responses:
-        "200":
-          description: OK
+        200:
+          description: List of trails
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Trail'
+                $ref: "#/components/schemas/TrailList"
 
     post:
-      tags:
-        - Trails
-      operationId: trails.create
+      tags: [Trails]
       summary: Create a new trail
+      operationId: trails.create_trail
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrailInput'
+              $ref: "#/components/schemas/TrailCreate"
       responses:
-        "201": 
+        201:
           description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trail"
 
   /trails/{trail_id}:
     parameters:
-      - name: trail_id
-        in: path
+      - in: path
+        name: trail_id
         required: true
-        schema: 
+        schema:
           type: string
 
     get:
-      tags:
-        - Trails
-      operationId: trails.read_one
-      summary: Get a specific trail
+      tags: [Trails]
+      summary: Get one trail
+      operationId: trails.get_trail
       responses:
-        "200": 
-          description: OK
+        200:
+          description: Single trail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Trail'
+                $ref: "#/components/schemas/Trail"
+        404:
+          description: Not found
 
     put:
-      tags:
-        - Trails
-      operationId: trails.update
+      tags: [Trails]
       summary: Update a trail
+      operationId: trails.update_trail
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrailInput'
+              $ref: "#/components/schemas/TrailUpdate"
       responses:
-        "200": 
+        200:
           description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trail"
 
     delete:
-      tags:
-        - Trails
-      operationId: trails.delete
+      tags: [Trails]
       summary: Delete a trail
+      operationId: trails.delete_trail
       responses:
-        "204": 
-          description: Deleted
-
-  /users:
-    get:
-      tags:
-        - Users
-      operationId: users.read_all
-      summary: Get all users
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-
-    post:
-      tags:
-        - Users
-      operationId: users.create
-      summary: Create a new user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserInput'
-      responses:
-        "201": 
-          description: Created
-
-  /users/{user_id}:
-    parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema: 
-          type: string
-
-    get:
-      tags:
-        - Users
-      operationId: users.read_one
-      summary: Get a specific user
-      responses:
-        "200": 
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-
-    put:
-      tags:
-        - Users
-      operationId: users.update
-      summary: Update a user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserInput'
-      responses:
-        "200": 
-          description: Updated
-
-    delete:
-      tags:
-        - Users
-      operationId: users.delete
-      summary: Delete a user
-      responses:
-        "204": 
+        204:
           description: Deleted
 
   /features:
     get:
-      tags:
-        - Features
-      operationId: features.read_all
+      tags: [Features]
       summary: Get all features
+      operationId: features.get_features
       responses:
-        "200":
-          description: OK
+        200:
+          description: List of features
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Feature'
+                $ref: "#/components/schemas/FeatureList"
 
     post:
-      tags:
-        - Features
-      operationId: features.create
-      summary: Create a new feature
+      tags: [Features]
+      summary: Create feature
+      operationId: features.create_feature
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FeatureInput'
+              $ref: "#/components/schemas/FeatureCreate"
       responses:
-        "201": 
+        201:
           description: Created
 
   /features/{feature_id}:
     parameters:
-      - name: feature_id
-        in: path
+      - in: path
+        name: feature_id
         required: true
-        schema: 
+        schema:
           type: string
 
     get:
-      tags:
-        - Features
-      operationId: features.read_one
-      summary: Get a specific feature
+      tags: [Features]
+      summary: Get one feature
+      operationId: features.get_feature
       responses:
-        "200": 
-          description: OK
+        200:
+          description: Feature found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Feature'
+                $ref: "#/components/schemas/Feature"
+        404:
+          description: Not found
 
     put:
-      tags:
-        - Features
-      operationId: features.update
-      summary: Update a feature
+      tags: [Features]
+      summary: Update feature
+      operationId: features.update_feature
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FeatureInput'
+              $ref: "#/components/schemas/FeatureCreate"
       responses:
-        "200": 
+        200:
           description: Updated
 
     delete:
-      tags:
-        - Features
-      operationId: features.delete
-      summary: Delete a feature
+      tags: [Features]
+      summary: Delete feature
+      operationId: features.delete_feature
       responses:
-        "204": 
+        204:
           description: Deleted
 
-  /trail_features:
+  /users:
     get:
-      tags:
-        - Trail Features
-      operationId: trail_features.read_all
-      summary: Get all trail-feature links
+      tags: [Users]
+      summary: Get all users
+      operationId: users.get_users
       responses:
-        "200":
-          description: OK
+        200:
+          description: List of users
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TrailFeature'
+                  $ref: "#/components/schemas/User"
 
     post:
-      tags:
-        - Trail Features
-      operationId: trail_features.create
-      summary: Create a trail-feature link
+      tags: [Users]
+      summary: Create a user
+      operationId: users.create_user
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrailFeatureInput'
+              $ref: "#/components/schemas/UserCreate"
       responses:
-        "201": 
+        201:
           description: Created
 
-  /trail_features/{trail_feature_id}:
+  /users/{user_id}:
     parameters:
-      - name: trail_feature_id
-        in: path
+      - in: path
+        name: user_id
         required: true
-        schema: 
-          type: integer
+        schema:
+          type: string
 
     get:
-      tags:
-        - Trail Features
-      operationId: trail_features.read_one
-      summary: Get a specific trail-feature link
+      tags: [Users]
+      summary: Get one user
+      operationId: users.get_user
       responses:
-        "200": 
-          description: OK
+        200:
+          description: User found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrailFeature'
+                $ref: "#/components/schemas/User"
+        404:
+          description: Not found
 
     put:
-      tags:
-        - Trail Features
-      operationId: trail_features.update
-      summary: Update a trail-feature link
+      tags: [Users]
+      summary: Update user
+      operationId: users.update_user
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrailFeatureInput'
+              $ref: "#/components/schemas/UserUpdate"
       responses:
-        "200": 
+        200:
           description: Updated
 
     delete:
-      tags:
-        - Trail Features
-      operationId: trail_features.delete
-      summary: Delete a trail-feature link
+      tags: [Users]
+      summary: Delete user
+      operationId: users.delete_user
       responses:
-        "204": 
+        204:
           description: Deleted
 
 components:
   schemas:
+    Difficulty:
+      type: object
+      properties:
+        difficulty_id:
+          type: string
+        level:
+          type: string
+
+    Feature:
+      type: object
+      properties:
+        feature_id:
+          type: string
+        feature_name:
+          type: string
+
+    FeatureCreate:
+      type: object
+      properties:
+        feature_name:
+          type: string
+      required:
+        - feature_name
+
+    FeatureList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Feature"
+
+    Location:
+      type: object
+      properties:
+        location_id:
+          type: string
+        location_name:
+          type: string
+        region:
+          type: string
+        country:
+          type: string
+
+    Route:
+      type: object
+      properties:
+        route_id:
+          type: string
+        route_type:
+          type: string
+
+    Trail:
+      type: object
+      properties:
+        trail_id:
+          type: string
+        trail_name:
+          type: string
+        description:
+          type: string
+        length:
+          type: number
+        elevation_gain:
+          type: integer
+        estimated_time:
+          type: number
+        difficulty_id:
+          type: string
+        location_id:
+          type: string
+        route_id:
+          type: string
+        visibility:
+          type: string
+          enum: [full, limited]
+        created_by:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    TrailList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Trail"
+
+    TrailCreate:
+      type: object
+      properties:
+        trail_name:
+          type: string
+        description:
+          type: string
+        length:
+          type: number
+        elevation_gain:
+          type: integer
+        estimated_time:
+          type: number
+        difficulty_id:
+          type: string
+        location_id:
+          type: string
+        route_id:
+          type: string
+        visibility:
+          type: string
+          enum: [full, limited]
+        created_by:
+          type: string
+      required:
+        - trail_name
+        - description
+        - visibility
+        - created_by
+
+    TrailUpdate:
+      type: object
+      properties:
+        trail_name:
+          type: string
+        description:
+          type: string
+        length:
+          type: number
+        elevation_gain:
+          type: integer
+        estimated_time:
+          type: number
+        visibility:
+          type: string
+
     User:
       type: object
       properties:
         user_id:
           type: string
-          example: "U000001"
         username:
           type: string
-          example: "Jessica Lim"
         email:
           type: string
-          example: "jessica@gmail.com"
         role:
           type: string
-          example: "admin"
-    
-    UserInput:
+
+    UserCreate:
       type: object
-      required:
-        - user_id
-        - username
-        - email
-        - password
-        - role
       properties:
         user_id:
           type: string
@@ -358,85 +389,15 @@ components:
           type: string
         role:
           type: string
-    
-    Trail:
+
+    UserUpdate:
       type: object
       properties:
-        trail_id:
+        username:
           type: string
-          example: "T000001"
-        trail_name:
+        email:
           type: string
-          example: "Bovisand to Jennycliff"
-        description:
+        password:
           type: string
-          example: "Coastal walk in South Devon AONB"
-        visibility:
-          type: string
-          example: "full"
-        created_by:
-          type: string
-          example: "U000001"
-    
-    TrailInput:
-      type: object
-      required:
-        - trail_id
-        - trail_name
-        - visibility
-      properties:
-        trail_id:
-          type: string
-        trail_name:
-          type: string
-        description:
-          type: string
-        visibility:
-          type: string
-        created_by:
-          type: string
-    
-    Feature:
-      type: object
-      properties:
-        feature_id:
-          type: string
-          example: "F000001"
-        feature_name:
-          type: string
-          example: "Beaches"
-    
-    FeatureInput:
-      type: object
-      required:
-        - feature_id
-        - feature_name
-      properties:
-        feature_id:
-          type: string
-        feature_name:
-          type: string
-    
-    TrailFeature:
-      type: object
-      properties:
-        trail_feature_id:
-          type: string
-          example: "TF000001"
-        trail_id:
-          type: string
-          example: "T000001"
-        feature_id:
-          type: string
-          example: "F000001"
-    
-    TrailFeatureInput:
-      type: object
-      required:
-        - trail_id
-        - feature_id
-      properties:
-        trail_id:
-          type: string
-        feature_id:
+        role:
           type: string

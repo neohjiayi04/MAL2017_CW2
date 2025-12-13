@@ -1,44 +1,45 @@
-from flask import abort, make_response, request, jsonify
-from config import db
-from models import Features, features_schema
+from flask import request, jsonify
+from models import db, Feature, feature_schema, features_schema
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-def read_all():
-    features = Features.query.all()
-    return features_schema.dump(features)
+def get_features():
+    items = Feature.query.all()
+    return jsonify(features_schema.dump(items)), 200
 
-def read_one(feature_id):
-    feature = Features.query.get(feature_id)
-    if not feature:
-        abort(404)
-    return jsonify({
-        "feature_id": feature.feature_id,
-        "feature_name": feature.feature_name
-    })
+def get_feature(feature_id):
+    f = Feature.query.get(feature_id)
+    if not f:
+        return jsonify({"error": "Not found"}), 404
+    return jsonify(feature_schema.dump(f)), 200
 
+def create_feature(body):
+    try:
+        data = feature_schema.load(body)
+        f = Feature(**data)
+        db.session.add(f)
+        db.session.commit()
+        return jsonify(feature_schema.dump(f)), 201
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": "Integrity error", "details": str(e.orig)}), 400
 
-def create():
-    data = request.json
-    new = Features(**data)
-    db.session.add(new)
+def update_feature(feature_id, body):
+    f = Feature.query.get(feature_id)
+    if not f:
+        return jsonify({"error": "Not found"}), 404
+
+    for key, value in body.items():
+        if hasattr(f, key):
+            setattr(f, key, value)
+
     db.session.commit()
-    return jsonify({"message": "Feature created"}), 201
+    return jsonify(feature_schema.dump(f)), 200
 
+def delete_feature(feature_id):
+    f = Feature.query.get(feature_id)
+    if not f:
+        return jsonify({"error": "Not found"}), 404
 
-def update(feature_id):
-    feature = Features.query.get(feature_id)
-    if not feature:
-        abort(404)
-    data = request.json
-    for key, value in data.items():
-        setattr(feature, key, value)
+    db.session.delete(f)
     db.session.commit()
-    return jsonify({"message": "Feature updated"})
-
-
-def delete(feature_id):
-    feature = Features.query.get(feature_id)
-    if not feature:
-        abort(404)
-    db.session.delete(feature)
-    db.session.commit()
-    return "", 204
+    return '', 204

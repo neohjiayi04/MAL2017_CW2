@@ -1,46 +1,68 @@
-from flask import abort, make_response, request, jsonify
-from config import db
-from models import Users, users_schema
+from flask import request, jsonify
+from models import db, Users, users_schema
+from marshmallow import Schema, fields
+from sqlalchemy.exc import SQLAlchemyError
 
-def read_all():
-    users = Users.query.all()
-    return users_schema.dump(users)
+# Single user schema
+class UserSchema(Schema):
+    user_id = fields.Str(required=True)
+    username = fields.Str(required=True)
+    email = fields.Email(required=True)
+    role = fields.Str(required=True)
 
-def read_one(user_id):
+user_schema = UserSchema()
+
+def get_users():
+    items = Users.query.all()
+    return jsonify(users_schema.dump(items)), 200
+
+def get_user(user_id):
     user = Users.query.get(user_id)
     if not user:
-        abort(404)
-    return jsonify({
-        "user_id": user.user_id,
-        "username": user.username,
-        "email": user.email,
-        "role": user.role
-    })
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(user_schema.dump(user)), 200
 
+def create_user(body):
+    try:
+        u = Users(
+            user_id=body["user_id"],
+            username=body["username"],
+            email=body["email"],
+            password=body["password"],
+            role=body.get("role", "user")
+        )
+        db.session.add(u)
+        db.session.commit()
+        return jsonify(user_schema.dump(u)), 201
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"error": "Database error", "details": str(e)}), 500
 
-def create():
-    data = request.json
-    new_user = Users(**data)
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify({"message": "User created"}), 201
-
-
-def update(user_id):
+def update_user(user_id, body):
     user = Users.query.get(user_id)
     if not user:
-        abort(404)
-    data = request.json
-    for key, value in data.items():
-        setattr(user, key, value)
-    db.session.commit()
-    return jsonify({"message": "User updated"})
+        return jsonify({"error": "User not found"}), 404
 
+    try:
+        for key, value in body.items():
+            if hasattr(user, key):
+                setattr(user, key, value)
+        
+        db.session.commit()
+        return jsonify(user_schema.dump(user)), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"error": "Database error", "details": str(e)}), 500
 
-def delete(user_id):
+def delete_user(user_id):
     user = Users.query.get(user_id)
     if not user:
-        abort(404)
-    db.session.delete(user)
-    db.session.commit()
-    return "", 204
+        return jsonify({"error": "User not found"}), 404
+
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        return '', 204
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"error": "Database error", "details": str(e)}), 500
