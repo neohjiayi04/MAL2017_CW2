@@ -52,7 +52,7 @@ The database uses schema `CW2` with the following tables:
 pip install -r requirements.txt
 
 2. Set up database:
-run `python build_database.py`
+run `python setup_database.py`
 
 3. Start the application:
 python app.py
