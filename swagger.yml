@@ -39,6 +39,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/Trail"
 
+  /trails/detailed:
+    get:
+      tags: [Trails]
+      summary: Get all trails with full details (location, difficulty, features, creator info)
+      operationId: trails.get_trails_detailed
+      responses:
+        200:
+          description: List of trails with complete information
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrailDetailed"
+
   /trails/{trail_id}:
     parameters:
       - in: path
@@ -49,15 +64,15 @@ paths:
 
     get:
       tags: [Trails]
-      summary: Get one trail
+      summary: Get one trail with full details
       operationId: trails.get_trail
       responses:
         200:
-          description: Single trail
+          description: Single trail with full details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Trail"
+                $ref: "#/components/schemas/TrailDetailed"
         404:
           description: Not found
 
@@ -318,6 +333,54 @@ components:
       items:
         $ref: "#/components/schemas/Trail"
 
+    TrailDetailed:
+      type: object
+      properties:
+        trail_id:
+          type: string
+        trail_name:
+          type: string
+        description:
+          type: string
+        length:
+          type: number
+        elevation_gain:
+          type: integer
+        estimated_time:
+          type: number
+        visibility:
+          type: string
+          enum: [full, limited]
+        created_by:
+          type: string
+        created_by_name:
+          type: string
+          description: Username of the creator
+        creator_email:
+          type: string
+          description: Email of the creator
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        difficulty_level:
+          type: string
+          description: Difficulty level (easy, moderate, hard, strenuous)
+        location_name:
+          type: string
+        region:
+          type: string
+        country:
+          type: string
+        route_type:
+          type: string
+          description: Type of route (loop, out-and-back, point-to-point)
+        features:
+          type: string
+          description: Comma-separated list of features
+
     TrailCreate:
       type: object
       properties:
@@ -379,8 +442,6 @@ components:
     UserCreate:
       type: object
       properties:
-        user_id:
-          type: string
         username:
           type: string
         email:
@@ -389,6 +450,10 @@ components:
           type: string
         role:
           type: string
+      required:
+        - username
+        - email
+        - password
 
     UserUpdate:
       type: object

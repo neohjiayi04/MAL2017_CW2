@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from models import db, Users, users_schema
 from marshmallow import Schema, fields
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 # Single user schema
 class UserSchema(Schema):
@@ -24,8 +24,19 @@ def get_user(user_id):
 
 def create_user(body):
     try:
+        # Get the highest user_id and generate next one
+        last_user = db.session.query(Users).order_by(Users.user_id.desc()).first()
+        
+        if last_user:
+            last_num = int(last_user.user_id[1:])
+            new_num = last_num + 1
+        else:
+            new_num = 1
+        
+        new_id = f"U{new_num:06d}"
+        
         u = Users(
-            user_id=body["user_id"],
+            user_id=new_id,
             username=body["username"],
             email=body["email"],
             password=body["password"],
@@ -34,6 +45,9 @@ def create_user(body):
         db.session.add(u)
         db.session.commit()
         return jsonify(user_schema.dump(u)), 201
+    except IntegrityError as e:
+        db.session.rollback()
+        return jsonify({"error": "Integrity error", "details": str(e.orig)}), 400
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({"error": "Database error", "details": str(e)}), 500
@@ -45,7 +59,7 @@ def update_user(user_id, body):
 
     try:
         for key, value in body.items():
-            if hasattr(user, key):
+            if hasattr(user, key) and key != 'user_id':
                 setattr(user, key, value)
         
         db.session.commit()

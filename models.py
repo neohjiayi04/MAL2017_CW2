@@ -1,9 +1,8 @@
 # models.py
 from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
 from marshmallow import Schema, fields, validate
 
-db = SQLAlchemy()
+from config import db, ma
 
 class Users(db.Model):
     __tablename__ = 'Users'
