@@ -1,11 +1,18 @@
 openapi: 3.0.0
+
 info:
   title: TrailService API
   version: 1.0.0
-  description: API for managing Trails, Features, and Users.
-  
-#tags section is defined to ensure that Trails are displayed first, not sorted alphabetically by default
+  description: >
+    RESTful API for managing wellbeing trails, users, and trail features.
+    Authentication is delegated to an external COMP2001 Authenticator API.
+
+servers:
+  - url: /
+
 tags:
+  - name: Authentication
+    description: User authentication
   - name: Trails
     description: Trail-related operations
   - name: Features
@@ -13,23 +20,72 @@ tags:
   - name: Users
     description: User management operations
 
-
-servers:
-  - url: /
-
 paths:
+
+  /login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate user using external COMP2001 authentication service.
+      operationId: login.login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: tim@plymouth.ac.uk
+                password:
+                  type: string
+                  example: COMP2001!
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: valid-user-token
+        "401":
+          description: Invalid email or password
+        "500":
+          description: Authentication service error
+
   /trails:
     get:
       tags: [Trails]
       summary: Get all trails
       operationId: trails.get_trails
       responses:
-        200:
+        "200":
           description: List of trails
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrailList"
+
+  /trails/detailed:
+    get:
+      tags: [Trails]
+      summary: Get all trails with full details
+      operationId: trails.get_trails_detailed
+      responses:
+        "200":
+          description: Detailed trail list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrailDetailed"
 
     post:
       tags: [Trails]
@@ -42,27 +98,12 @@ paths:
             schema:
               $ref: "#/components/schemas/TrailCreate"
       responses:
-        201:
-          description: Created
+        "201":
+          description: Trail created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Trail"
-
-  /trails/detailed:
-    get:
-      tags: [Trails]
-      summary: Get all trails with full details (location, difficulty, features, creator info)
-      operationId: trails.get_trails_detailed
-      responses:
-        200:
-          description: List of trails with complete information
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TrailDetailed"
 
   /trails/{trail_id}:
     parameters:
@@ -74,17 +115,17 @@ paths:
 
     get:
       tags: [Trails]
-      summary: Get one trail with full details
+      summary: Get trail by ID
       operationId: trails.get_trail
       responses:
-        200:
-          description: Single trail with full details
+        "200":
+          description: Trail found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrailDetailed"
-        404:
-          description: Not found
+        "404":
+          description: Trail not found
 
     put:
       tags: [Trails]
@@ -97,8 +138,8 @@ paths:
             schema:
               $ref: "#/components/schemas/TrailUpdate"
       responses:
-        200:
-          description: Updated
+        "200":
+          description: Trail updated
           content:
             application/json:
               schema:
@@ -109,8 +150,8 @@ paths:
       summary: Delete a trail
       operationId: trails.delete_trail
       responses:
-        204:
-          description: Deleted
+        "204":
+          description: Trail deleted
 
   /features:
     get:
@@ -118,26 +159,12 @@ paths:
       summary: Get all features
       operationId: features.get_features
       responses:
-        200:
-          description: List of features
+        "200":
+          description: Feature list
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FeatureList"
-
-    post:
-      tags: [Features]
-      summary: Create feature
-      operationId: features.create_feature
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/FeatureCreate"
-      responses:
-        201:
-          description: Created
 
   /features/{feature_id}:
     parameters:
@@ -149,39 +176,17 @@ paths:
 
     get:
       tags: [Features]
-      summary: Get one feature
+      summary: Get feature by ID
       operationId: features.get_feature
       responses:
-        200:
+        "200":
           description: Feature found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Feature"
-        404:
-          description: Not found
-
-    put:
-      tags: [Features]
-      summary: Update feature
-      operationId: features.update_feature
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/FeatureCreate"
-      responses:
-        200:
-          description: Updated
-
-    delete:
-      tags: [Features]
-      summary: Delete feature
-      operationId: features.delete_feature
-      responses:
-        204:
-          description: Deleted
+        "404":
+          description: Feature not found
 
   /users:
     get:
@@ -189,8 +194,8 @@ paths:
       summary: Get all users
       operationId: users.get_users
       responses:
-        200:
-          description: List of users
+        "200":
+          description: User list
           content:
             application/json:
               schema:
@@ -200,7 +205,7 @@ paths:
 
     post:
       tags: [Users]
-      summary: Create a user
+      summary: Create user
       operationId: users.create_user
       requestBody:
         required: true
@@ -209,8 +214,8 @@ paths:
             schema:
               $ref: "#/components/schemas/UserCreate"
       responses:
-        201:
-          description: Created
+        "201":
+          description: User created
 
   /users/{user_id}:
     parameters:
@@ -222,17 +227,17 @@ paths:
 
     get:
       tags: [Users]
-      summary: Get one user
+      summary: Get user by ID
       operationId: users.get_user
       responses:
-        200:
+        "200":
           description: User found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-        404:
-          description: Not found
+        "404":
+          description: User not found
 
     put:
       tags: [Users]
@@ -245,25 +250,97 @@ paths:
             schema:
               $ref: "#/components/schemas/UserUpdate"
       responses:
-        200:
-          description: Updated
+        "200":
+          description: User updated
 
     delete:
       tags: [Users]
       summary: Delete user
       operationId: users.delete_user
       responses:
-        204:
-          description: Deleted
+        "204":
+          description: User deleted
 
 components:
   schemas:
-    Difficulty:
+
+    Trail:
       type: object
       properties:
+        trail_id:
+          type: string
+          example: T000005
+        trail_name:
+          type: string
+          example: Plymbridge Circular
+        description:
+          type: string
+        length:
+          type: number
+          format: float
+        elevation_gain:
+          type: integer
+        estimated_time:
+          type: number
+          format: float
+        visibility:
+          type: string
+          enum: [full, limited]
+        created_by:
+          type: string
+
+    TrailList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Trail"
+
+    TrailDetailed:
+      allOf:
+        - $ref: "#/components/schemas/Trail"
+        - type: object
+          properties:
+            difficulty_level:
+              type: string
+            location_name:
+              type: string
+            route_type:
+              type: string
+            features:
+              type: string
+
+    TrailCreate:
+      type: object
+      required: [trail_name, visibility, difficulty_id, route_id, created_by]
+      properties:
+        trail_name:
+          type: string
+        description:
+          type: string
+        length:
+          type: number
+        elevation_gain:
+          type: integer
+        estimated_time:
+          type: number
         difficulty_id:
           type: string
-        level:
+        route_id:
+          type: string
+        location_id:
+          type: string
+        visibility:
+          type: string
+        created_by:
+          type: string
+
+    TrailUpdate:
+      type: object
+      properties:
+        trail_name:
+          type: string
+        description:
+          type: string
+        visibility:
           type: string
 
     Feature:
@@ -274,168 +351,10 @@ components:
         feature_name:
           type: string
 
-    FeatureCreate:
-      type: object
-      properties:
-        feature_name:
-          type: string
-      required:
-        - feature_name
-
     FeatureList:
       type: array
       items:
         $ref: "#/components/schemas/Feature"
-
-    Location:
-      type: object
-      properties:
-        location_id:
-          type: string
-        location_name:
-          type: string
-        region:
-          type: string
-        country:
-          type: string
-
-    Route:
-      type: object
-      properties:
-        route_id:
-          type: string
-        route_type:
-          type: string
-
-    Trail:
-      type: object
-      properties:
-        trail_id:
-          type: string
-        trail_name:
-          type: string
-        description:
-          type: string
-        length:
-          type: number
-        elevation_gain:
-          type: integer
-        estimated_time:
-          type: number
-        difficulty_id:
-          type: string
-        location_id:
-          type: string
-        route_id:
-          type: string
-        visibility:
-          type: string
-          enum: [full, limited]
-        created_by:
-          type: string
-        created_at:
-          type: string
-        updated_at:
-          type: string
-
-    TrailList:
-      type: array
-      items:
-        $ref: "#/components/schemas/Trail"
-
-    TrailDetailed:
-      type: object
-      properties:
-        trail_id:
-          type: string
-        trail_name:
-          type: string
-        description:
-          type: string
-        length:
-          type: number
-        elevation_gain:
-          type: integer
-        estimated_time:
-          type: number
-        visibility:
-          type: string
-          enum: [full, limited]
-        created_by:
-          type: string
-        created_by_name:
-          type: string
-          description: Username of the creator
-        creator_email:
-          type: string
-          description: Email of the creator
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        difficulty_level:
-          type: string
-          description: Difficulty level (easy, moderate, hard, strenuous)
-        location_name:
-          type: string
-        region:
-          type: string
-        country:
-          type: string
-        route_type:
-          type: string
-          description: Type of route (loop, out-and-back, point-to-point)
-        features:
-          type: string
-          description: Comma-separated list of features
-
-    TrailCreate:
-      type: object
-      properties:
-        trail_name:
-          type: string
-        description:
-          type: string
-        length:
-          type: number
-        elevation_gain:
-          type: integer
-        estimated_time:
-          type: number
-        difficulty_id:
-          type: string
-        location_id:
-          type: string
-        route_id:
-          type: string
-        visibility:
-          type: string
-          enum: [full, limited]
-        created_by:
-          type: string
-      required:
-        - trail_name
-        - description
-        - visibility
-        - created_by
-
-    TrailUpdate:
-      type: object
-      properties:
-        trail_name:
-          type: string
-        description:
-          type: string
-        length:
-          type: number
-        elevation_gain:
-          type: integer
-        estimated_time:
-          type: number
-        visibility:
-          type: string
 
     User:
       type: object
@@ -451,6 +370,7 @@ components:
 
     UserCreate:
       type: object
+      required: [username, email, password, role]
       properties:
         username:
           type: string
@@ -460,10 +380,6 @@ components:
           type: string
         role:
           type: string
-      required:
-        - username
-        - email
-        - password
 
     UserUpdate:
       type: object
