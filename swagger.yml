@@ -3,6 +3,16 @@ info:
   title: TrailService API
   version: 1.0.0
   description: API for managing Trails, Features, and Users.
+  
+#tags section is defined to ensure that Trails are displayed first, not sorted alphabetically by default
+tags:
+  - name: Trails
+    description: Trail-related operations
+  - name: Features
+    description: Feature-related operations
+  - name: Users
+    description: User management operations
+
 
 servers:
   - url: /
