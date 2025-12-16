@@ -26,3 +26,5 @@ def get_difficulties():
         {"difficulty_id": d.difficulty_id, "level": d.level}
         for d in items
     ]), 200
+
+

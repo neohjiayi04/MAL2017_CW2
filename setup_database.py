@@ -16,10 +16,10 @@ sql_script = """
 USE CW2;
 GO
 
--- Drop existing objects
+-- Drop existing objects (in correct order - dependent objects first)
 IF OBJECT_ID('CW2.vw_TrailDetails', 'V') IS NOT NULL DROP VIEW CW2.vw_TrailDetails;
-IF OBJECT_ID('CW2.vTrailWebpage', 'V') IS NOT NULL DROP VIEW CW2.vTrailWebpage;
 IF OBJECT_ID('CW2.trgTrailInsert', 'TR') IS NOT NULL DROP TRIGGER CW2.trgTrailInsert;
+IF OBJECT_ID('CW2.Trail_Point', 'U') IS NOT NULL DROP TABLE CW2.Trail_Point;
 IF OBJECT_ID('CW2.Trail_Feature', 'U') IS NOT NULL DROP TABLE CW2.Trail_Feature;
 IF OBJECT_ID('CW2.Trail_Log', 'U') IS NOT NULL DROP TABLE CW2.Trail_Log;
 IF OBJECT_ID('CW2.Trail', 'U') IS NOT NULL DROP TABLE CW2.Trail;
@@ -96,7 +96,7 @@ CREATE TABLE CW2.Location (
 );
 GO
 
--- Feature Table (IMPORTANT: Strict constraint on feature names)
+-- Feature Table
 CREATE TABLE CW2.Feature (
     feature_id VARCHAR(7) PRIMARY KEY,
     feature_name VARCHAR(50) NOT NULL,
@@ -159,6 +159,27 @@ CREATE TABLE CW2.Trail (
 );
 GO
 
+-- Trail Point Table
+CREATE TABLE CW2.Trail_Point (
+    trail_point_id VARCHAR(8) PRIMARY KEY,
+    trail_id VARCHAR(7) NOT NULL,
+    latitude DECIMAL(9,6) NOT NULL,
+    longitude DECIMAL(9,6) NOT NULL,
+    sequence_no INT NOT NULL,
+
+    CONSTRAINT CK_TrailPoint_ID_Format
+        CHECK (trail_point_id LIKE 'TP[0-9][0-9][0-9][0-9][0-9][0-9]'),
+
+    CONSTRAINT FK_TrailPoint_Trail
+        FOREIGN KEY (trail_id)
+        REFERENCES CW2.Trail(trail_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT UQ_TrailPoint_Order
+        UNIQUE (trail_id, sequence_no)
+);
+GO
+
 -- Trail Feature Table
 CREATE TABLE CW2.Trail_Feature (
     trail_feature_id VARCHAR(8) PRIMARY KEY,
@@ -185,23 +206,26 @@ CREATE TABLE CW2.Trail_Log (
 );
 GO
 
--- Insert Sample Data
+
 INSERT INTO CW2.Users (user_id, username, email, password, role) VALUES
 ('U000001', 'Jessica Lim', 'jessica@gmail.com', 'hashedPass123', 'admin'),
 ('U000002', 'Grace Hopper', 'grace@plymouth.ac.uk', 'ISAD123!', 'user'),
 ('U000003', 'Ada Lovelace', 'ada@plymouth.ac.uk', 'AhaPass2!', 'user'),
 ('U000004', 'Tim Berners-Lee', 'tim@plymouth.ac.uk', 'COMP2001!', 'user');
+GO
 
 INSERT INTO CW2.Route (route_id, route_type) VALUES
 ('R000001', 'loop'),
 ('R000002', 'out-and-back'),
 ('R000003', 'point-to-point');
+GO
 
 INSERT INTO CW2.Difficulty (difficulty_id, level) VALUES
 ('D000001', 'easy'),
 ('D000002', 'moderate'),
 ('D000003', 'hard'),
 ('D000004', 'strenuous');
+GO
 
 INSERT INTO CW2.Location (location_id, location_name, region, country) VALUES
 ('L000001', 'Plymouth', 'Devon', 'England'),
@@ -210,6 +234,7 @@ INSERT INTO CW2.Location (location_id, location_name, region, country) VALUES
 ('L000004', 'Rocky Mountain National Park', 'Colorado', 'United States'),
 ('L000005', 'Kuala Lumpur', 'Kuala Lumpur', 'Malaysia'),
 ('L000006', 'Subang Jaya', 'Selangor', 'Malaysia');
+GO
 
 INSERT INTO CW2.Feature (feature_id, feature_name) VALUES
 ('F000001', 'Beaches'),
@@ -227,6 +252,7 @@ INSERT INTO CW2.Feature (feature_id, feature_name) VALUES
 ('F000013', 'Waterfalls'),
 ('F000014', 'Wildflowers'),
 ('F000015', 'Wildlife');
+GO
 
 INSERT INTO CW2.Trail (
     trail_id, trail_name, description, visibility, created_at, updated_at,
@@ -248,6 +274,29 @@ INSERT INTO CW2.Trail (
     'The loop trail consists of a dirt trail with several steep and challenging climbs, making it a great location for a daily workout. Upon reaching the summit, hikers will be treated to expansive panoramic views, encompassing the urban landscape of Putra Heights, Subang Jaya, and the surrounding areas. The hill is a prime example of a natural space in the heart of the city that is valued and maintained by the community for the mutual benefit.',
     'full', '2025-11-18 11:03:00', '2025-11-25 18:03:00',
     'L000006', 3.4, 1.50, 185, 'R000001', 'D000002', 'U000001');
+GO
+
+INSERT INTO CW2.Trail_Point (trail_point_id, trail_id, sequence_no, latitude, longitude) VALUES
+-- Points for T000001 (Bovisand to Jennycliff)
+('TP000001', 'T000001', 1, 50.351234, -4.135678),
+('TP000002', 'T000001', 2, 50.352010, -4.138900),
+('TP000003', 'T000001', 3, 50.353456, -4.142300),
+
+-- Points for T000002 (Sri Bintang Hill)
+('TP000004', 'T000002', 1, 3.156789, 101.672345),
+('TP000005', 'T000002', 2, 3.157890, 101.673456),
+('TP000006', 'T000002', 3, 3.158901, 101.674567),
+
+-- Points for T000003 (Plymbridge Circular)
+('TP000007', 'T000003', 1, 50.412345, -4.098765),
+('TP000008', 'T000003', 2, 50.413456, -4.097654),
+('TP000009', 'T000003', 3, 50.414567, -4.096543),
+
+-- Points for T000004 (Kingsley Hill Peak Loop)
+('TP000010', 'T000004', 1, 3.048123, 101.585234),
+('TP000011', 'T000004', 2, 3.049234, 101.586345),
+('TP000012', 'T000004', 3, 3.050345, 101.587456);
+GO
 
 INSERT INTO CW2.Trail_Feature (trail_feature_id, feature_id, trail_id) VALUES
     ('TF000001', 'F000001', 'T000001'),
@@ -309,6 +358,7 @@ GROUP BY
     t.created_at, t.updated_at, l.location_name, l.region, 
     l.country, r.route_type, d.level, u.username, u.email, t.created_by;
 GO
+
 PRINT 'Database setup completed successfully!';
 """
 
@@ -354,6 +404,24 @@ try:
     
     cursor.execute("SELECT COUNT(*) FROM CW2.Trail")
     print(f"  Trails: {cursor.fetchone()[0]}")
+    
+    cursor.execute("SELECT COUNT(*) FROM CW2.Trail_Point")
+    print(f"  Trail Points: {cursor.fetchone()[0]}")  # ✅ Added this check
+    
+    # Show points per trail
+    print("\n📍 Trail Points Distribution:")
+    cursor.execute("""
+        SELECT 
+            t.trail_id,
+            t.trail_name,
+            COUNT(tp.trail_point_id) as point_count
+        FROM CW2.Trail t
+        LEFT JOIN CW2.Trail_Point tp ON t.trail_id = tp.trail_id
+        GROUP BY t.trail_id, t.trail_name
+        ORDER BY t.trail_id
+    """)
+    for row in cursor.fetchall():
+        print(f"  {row[0]} ({row[1]}): {row[2]} points")
     
     cursor.close()
     conn.close()

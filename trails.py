@@ -1,26 +1,30 @@
-from flask import jsonify
+from flask import jsonify, request
 from config import db
-from models import Trail, trail_schema, trails_schema
+from models import Trail, Trail_Point, trail_schema, trails_schema, trail_points_schema
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import text
 from datetime import datetime
 
 
 def get_trails():
-    """Get all trails (basic info)"""
+    """Get all trails with basic information"""
     trails = Trail.query.all()
     return trails_schema.dump(trails), 200
 
 
 def get_trails_detailed():
-    """Get all trails with full details (via view)"""
+    """Get all trails with full details including related information"""
     try:
         query = text("SELECT * FROM CW2.vw_TrailDetails")
         result = db.session.execute(query)
+        
+        # ✅ FIX: Fetch all rows first before doing additional queries
+        rows = result.fetchall()
 
         trails = []
-        for row in result:
-            trails.append({
+        for row in rows:  # ✅ Changed from 'result' to 'rows'
+            # Create trail data dictionary
+            trail_data = {
                 "trail_id": row.trail_id,
                 "trail_name": row.trail_name,
                 "description": row.description,
@@ -39,7 +43,14 @@ def get_trails_detailed():
                 "country": row.country,
                 "route_type": row.route_type,
                 "features": row.features
-            })
+            }
+
+            # ✅ Now safe to execute another query
+            points = Trail_Point.query.filter_by(trail_id=row.trail_id)\
+                                      .order_by(Trail_Point.sequence_no).all()
+            trail_data["points"] = trail_points_schema.dump(points)
+            
+            trails.append(trail_data)
 
         return jsonify(trails), 200
 
@@ -48,17 +59,18 @@ def get_trails_detailed():
 
 
 def get_trail(trail_id):
-    """Get one trail with full details"""
+    """Get a single trail with full details and GPS waypoints"""
     try:
         query = text(
             "SELECT * FROM CW2.vw_TrailDetails WHERE trail_id = :trail_id"
         )
         result = db.session.execute(query, {"trail_id": trail_id})
-        row = result.fetchone()
+        row = result.fetchone()  # ✅ This is already correct - fetchone() closes the result
 
         if not row:
             return {"error": "Trail not found"}, 404
 
+        # Create trail data dictionary
         trail = {
             "trail_id": row.trail_id,
             "trail_name": row.trail_name,
@@ -80,6 +92,11 @@ def get_trail(trail_id):
             "features": row.features
         }
 
+        # ✅ Now safe to execute another query
+        points = Trail_Point.query.filter_by(trail_id=trail_id)\
+                                  .order_by(Trail_Point.sequence_no).all()
+        trail["points"] = trail_points_schema.dump(points)
+    
         return jsonify(trail), 200
 
     except Exception as e:
@@ -87,7 +104,7 @@ def get_trail(trail_id):
 
 
 def create_trail(body):
-    """Create a new trail using raw SQL to avoid pyodbc DECIMAL bug"""
+    """Create a new trail with metadata"""
     try:
         # Generate new trail ID
         last_trail = (
@@ -151,7 +168,7 @@ def create_trail(body):
 
 
 def update_trail(trail_id, body):
-    """Update an existing trail using raw SQL to avoid pyodbc DECIMAL bug"""
+    """Update an existing trail's metadata"""
     # Check if trail exists
     trail = Trail.query.get(trail_id)
     if not trail:
@@ -166,10 +183,10 @@ def update_trail(trail_id, body):
         params = {"trail_id": trail_id}
 
         for key, value in data.items():
-            if key not in ("trail_id", "created_at"):
+            if key not in ("trail_id", "created_at", "points"):
                 update_fields.append(f"{key} = :{key}")
                 
-                # Convert Decimal to float for length and estimated_time
+                # Convert Decimal to float for numeric fields
                 if key in ("length", "estimated_time") and value is not None:
                     params[key] = float(value)
                 else:
@@ -203,7 +220,7 @@ def update_trail(trail_id, body):
 
 
 def delete_trail(trail_id):
-    """Delete a trail"""
+    """Delete a trail and its associated waypoints (cascade)"""
     trail = Trail.query.get(trail_id)
     if not trail:
         return {"error": "Trail not found"}, 404
