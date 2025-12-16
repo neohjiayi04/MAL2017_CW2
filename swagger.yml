@@ -15,6 +15,8 @@ tags:
     description: User authentication
   - name: Trails
     description: Trail-related operations
+  - name: Reference Data
+    description: Reference data for locations, routes, difficulties, and features
 
 paths:
 
@@ -34,11 +36,11 @@ paths:
                 email:
                   type: string
                   format: email
-                  example: "user@example.com"
+                  example: "grace@plymouth.ac.uk"
                 password:
                   type: string
                   format: password
-                  example: "password123"
+                  example: "ISAD123!"
       responses:
         "200":
           description: Login successful
@@ -51,7 +53,7 @@ paths:
                     type: boolean
                     example: true
         "400":
-          description: Invalid request format
+          description: Invalid request format - missing email or password
         "401":
           description: Invalid email or password
         "500":
@@ -76,7 +78,7 @@ paths:
 
     post:
       tags: [Trails]
-      summary: Create a new trail
+      summary: Create a new trail with optional GPS waypoints
       operationId: trails.create_trail
       requestBody:
         required: true
@@ -92,7 +94,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Trail"
         "400":
-          description: Invalid request body
+          description: Invalid request body or point data
         "409":
           description: Trail with this name already exists
         "500":
@@ -102,10 +104,11 @@ paths:
     get:
       tags: [Trails]
       summary: Get all trails with full details
+      description: Returns trails with location names, difficulty levels, route types, features, and creator information
       operationId: trails.get_trails_detailed
       responses:
         "200":
-          description: Detailed trail list
+          description: Detailed trail list with related information
           content:
             application/json:
               schema:
@@ -122,6 +125,7 @@ paths:
         required: true
         schema:
           type: string
+        description: Trail ID (e.g., T000001)
         example: "T000001"
 
     get:
@@ -130,7 +134,7 @@ paths:
       operationId: trails.get_trail
       responses:
         "200":
-          description: Trail found
+          description: Trail found with complete details and GPS waypoints
           content:
             application/json:
               schema:
@@ -142,7 +146,8 @@ paths:
 
     put:
       tags: [Trails]
-      summary: Update a trail
+      summary: Update a trail's metadata
+      description: Updates trail metadata. Points are not modifiable via this endpoint.
       operationId: trails.update_trail
       requestBody:
         required: true
@@ -161,18 +166,93 @@ paths:
           description: Invalid request body
         "404":
           description: Trail not found
+        "409":
+          description: Trail name already exists
         "500":
           description: Server error
 
     delete:
       tags: [Trails]
       summary: Delete a trail
+      description: Deletes trail and all associated waypoints (CASCADE)
       operationId: trails.delete_trail
       responses:
         "204":
           description: Trail deleted successfully
         "404":
           description: Trail not found
+        "500":
+          description: Server error
+
+  /reference/locations:
+    get:
+      tags: [Reference Data]
+      summary: Get all available locations
+      description: Returns list of all locations where trails can be created
+      operationId: reference.get_locations
+      responses:
+        "200":
+          description: List of locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Location"
+        "500":
+          description: Server error
+
+  /reference/routes:
+    get:
+      tags: [Reference Data]
+      summary: Get all route types
+      description: Returns available route types (loop, out-and-back, point-to-point)
+      operationId: reference.get_routes
+      responses:
+        "200":
+          description: List of route types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Route"
+        "500":
+          description: Server error
+
+  /reference/difficulties:
+    get:
+      tags: [Reference Data]
+      summary: Get all difficulty levels
+      description: Returns trail difficulty levels (easy, moderate, hard, strenuous)
+      operationId: reference.get_difficulties
+      responses:
+        "200":
+          description: List of difficulty levels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Difficulty"
+        "500":
+          description: Server error
+
+  /reference/features:
+    get:
+      tags: [Reference Data]
+      summary: Get all trail features
+      description: Returns available trail features (beaches, waterfalls, forests, etc.)
+      operationId: reference.get_features
+      responses:
+        "200":
+          description: List of trail features
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Feature"
         "500":
           description: Server error
 
@@ -190,20 +270,26 @@ components:
           example: "Plymouth Waterfront Walk"
         description:
           type: string
+          example: "Scenic coastal walk"
         length:
           type: number
           format: double
+          example: 5.8
         elevation_gain:
           type: integer
+          example: 161
         estimated_time:
           type: number
           format: double
+          example: 2.0
         visibility:
           type: string
           enum: [full, limited]
+          example: "full"
         created_by:
           type: string
-          description: User ID only (no user object)
+          description: User ID who created the trail
+          example: "U000001"
         created_at:
           type: string
           format: date-time
@@ -212,12 +298,16 @@ components:
           format: date-time
         location_id:
           type: string
+          example: "L000001"
         route_id:
           type: string
+          example: "R000001"
         difficulty_id:
           type: string
+          example: "D000002"
         points:
           type: array
+          description: GPS waypoints for this trail
           items:
             $ref: "#/components/schemas/TrailPoint"
 
@@ -228,18 +318,29 @@ components:
           properties:
             difficulty_level:
               type: string
-              example: "Moderate"
+              example: "moderate"
             location_name:
               type: string
+              example: "Plymouth"
             region:
               type: string
+              example: "Devon"
             country:
               type: string
+              example: "England"
             route_type:
               type: string
+              example: "out-and-back"
             features:
               type: string
-              example: "Waterfalls, Views"
+              description: Comma-separated list of features
+              example: "Beaches, Pub walks"
+            created_by_name:
+              type: string
+              example: "Jessica Lim"
+            creator_email:
+              type: string
+              example: "jessica@gmail.com"
 
     TrailCreate:
       type: object
@@ -247,35 +348,75 @@ components:
       properties:
         trail_name:
           type: string
+          minLength: 1
+          maxLength: 100
+          example: "New Coastal Trail"
         description:
           type: string
+          example: "Beautiful seaside walk with stunning views"
         length:
           type: number
+          format: double
+          minimum: 0.01
+          maximum: 999.99
+          example: 5.5
         elevation_gain:
           type: integer
+          minimum: 0
+          example: 120
         estimated_time:
           type: number
+          format: double
+          minimum: 0.01
+          maximum: 99.99
+          example: 2.0
         difficulty_id:
           type: string
+          example: "D000002"
         route_id:
           type: string
+          example: "R000001"
         location_id:
           type: string
+          example: "L000001"
         visibility:
           type: string
           enum: [full, limited]
+          example: "full"
         created_by:
           type: string
-        points:              
+          example: "U000001"
+        points:
           type: array
+          description: Optional GPS waypoints for the trail
           items:
-            $ref: "#/components/schemas/TrailPoint"
+            type: object
+            required: [latitude, longitude, sequence_no]
+            properties:
+              latitude:
+                type: number
+                format: double
+                minimum: -90
+                maximum: 90
+                example: 50.371234
+              longitude:
+                type: number
+                format: double
+                minimum: -180
+                maximum: 180
+                example: -4.142678
+              sequence_no:
+                type: integer
+                minimum: 1
+                example: 1
 
     TrailUpdate:
       type: object
       properties:
         trail_name:
           type: string
+          minLength: 1
+          maxLength: 100
         description:
           type: string
         visibility:
@@ -283,10 +424,17 @@ components:
           enum: [full, limited]
         length:
           type: number
+          format: double
+          minimum: 0.01
+          maximum: 999.99
         elevation_gain:
           type: integer
+          minimum: 0
         estimated_time:
           type: number
+          format: double
+          minimum: 0.01
+          maximum: 99.99
         difficulty_id:
           type: string
         route_id:
@@ -299,11 +447,65 @@ components:
       properties:
         trail_point_id:
           type: string
+          example: "TP000001"
+        trail_id:
+          type: string
+          example: "T000001"
         latitude:
           type: number
           format: double
+          example: 50.351234
         longitude:
           type: number
           format: double
+          example: -4.135678
         sequence_no:
           type: integer
+          minimum: 1
+          example: 1
+
+    Difficulty:
+      type: object
+      properties:
+        difficulty_id:
+          type: string
+          example: "D000001"
+        level:
+          type: string
+          example: "moderate"
+
+    Location:
+      type: object
+      properties:
+        location_id:
+          type: string
+          example: "L000001"
+        location_name:
+          type: string
+          example: "Plymouth"
+        region:
+          type: string
+          example: "Devon"
+        country:
+          type: string
+          example: "England"
+
+    Route:
+      type: object
+      properties:
+        route_id:
+          type: string
+          example: "R000001"
+        route_type:
+          type: string
+          example: "loop"
+
+    Feature:
+      type: object
+      properties:
+        feature_id:
+          type: string
+          example: "F000001"
+        feature_name:
+          type: string
+          example: "Waterfalls"
