@@ -8,22 +8,24 @@
 
 
 ## Project Description
-This microservice provides RESTful API endpoints for managing hiking trails as part of a larger wellbeing trail application. It implements full CRUD operations with authentication integration.
+This microservice provides RESTful API endpoints for managing hiking trails as part of a larger wellbeing trail application. It implements full CRUD operations for trails, integrates with an external COMP2001 Authenticator API, and stores all data in a normalized Microsoft SQL Server database.
 
 
 ## 📌 Features
 
-✅ Full CRUD operations on trails, users, features
+✅ Full CRUD operations on trails
 
 ✅ Authentication integration with external API
 
-✅ Role-based visibility (full/limited)
+✅ Reference data endpoints (locations, routes, difficulties, features)
 
-✅ Many-to-many relationship (trails-features)
+✅ Trail visibility control (full/limited)
 
-✅ Audit trail logging
+✅ Automated audit logging via SQL triggers
 
-✅ RESTful API with Swagger documentation
+✅ RESTful API with OpenAPI 3.0 and Swagger UI documentation
+
+✅ Comprehensive error handling with appropriate HTTP status codes
 
 
 ## 🧰 Technology Stack
@@ -31,7 +33,7 @@ This microservice provides RESTful API endpoints for managing hiking trails as p
 - **Database:** Microsoft SQL Server
 - **ORM:** SQLAlchemy
 - **Validation:** Marshmallow
-- **Documentation:** OpenAPI/Swagger
+- **Documentation:** OpenAPI/Swagger UI
 
 
 ## 🗄️ Database Schema
@@ -39,6 +41,7 @@ The database uses schema `CW2` with the following tables:
 - Users
 - Location
 - Route
+- Trail_Point
 - Difficulty
 - Feature
 - Trail
@@ -48,22 +51,32 @@ The database uses schema `CW2` with the following tables:
 
 ## 🚀 Installation & Setup
 
-1. Install dependencies:
+1. Clone the repository:
+git clone https://github.com/neohjiayi04/MAL2017_CW2.git
+cd MAL2017_CW2
+
+2.  Install dependencies:
 pip install -r requirements.txt
 
-2. Set up database:
+3. Configure database connection:
+Update config.py with your database credentials
+
+4. Set up database:
 run `python setup_database.py`
 
-3. Start the application:
+5. Start the application:
 python app.py
 
-4. Access Swagger UI:
+6. Access Swagger UI:
 [http://localhost:5000/ui
 ](http://127.0.0.1:5000/ui/)
 
 
 ## 🔗 API Endpoints
 
+### Authentication
+- POST /login - Authenticate user via external COMP2001 API
+  
 ### Trails
 - `GET /trails` - List all trails
 - `GET /trails/{id}` - Get specific trail
@@ -71,7 +84,11 @@ python app.py
 - `PUT /trails/{id}` - Update trail (requires auth + ownership)
 - `DELETE /trails/{id}` - Delete trail (requires auth + ownership)
   
-Similar endpoints for Users, Features, Trail_Features
+### Reference Data (Read-Only)
+- GET /reference/locations - Available trail locations
+- GET /reference/routes - Route types
+- GET /reference/difficulties - Difficulty levels
+- GET /reference/features - Trail features
 
 
 ## 🛠️Testing
