@@ -18,11 +18,11 @@ def get_trails_detailed():
         query = text("SELECT * FROM CW2.vw_TrailDetails")
         result = db.session.execute(query)
         
-        # ✅ FIX: Fetch all rows first before doing additional queries
+        # Fetch all rows first before doing additional queries
         rows = result.fetchall()
 
         trails = []
-        for row in rows:  # ✅ Changed from 'result' to 'rows'
+        for row in rows:
             # Create trail data dictionary
             trail_data = {
                 "trail_id": row.trail_id,
@@ -45,7 +45,7 @@ def get_trails_detailed():
                 "features": row.features
             }
 
-            # ✅ Now safe to execute another query
+            # Now safe to execute another query
             points = Trail_Point.query.filter_by(trail_id=row.trail_id)\
                                       .order_by(Trail_Point.sequence_no).all()
             trail_data["points"] = trail_points_schema.dump(points)
@@ -65,7 +65,7 @@ def get_trail(trail_id):
             "SELECT * FROM CW2.vw_TrailDetails WHERE trail_id = :trail_id"
         )
         result = db.session.execute(query, {"trail_id": trail_id})
-        row = result.fetchone()  # ✅ This is already correct - fetchone() closes the result
+        row = result.fetchone()
 
         if not row:
             return {"error": "Trail not found"}, 404
@@ -92,7 +92,7 @@ def get_trail(trail_id):
             "features": row.features
         }
 
-        # ✅ Now safe to execute another query
+        # Now safe to execute another query
         points = Trail_Point.query.filter_by(trail_id=trail_id)\
                                   .order_by(Trail_Point.sequence_no).all()
         trail["points"] = trail_points_schema.dump(points)
@@ -104,7 +104,7 @@ def get_trail(trail_id):
 
 
 def create_trail(body):
-    """Create a new trail with metadata"""
+    """Create a new trail with metadata and optional GPS waypoints"""
     try:
         # Generate new trail ID
         last_trail = (
@@ -120,13 +120,16 @@ def create_trail(body):
 
         trail_id = f"T{next_num:06d}"
 
-        # Validate data with schema
+        # Separate points from trail data for validation
+        points_data = body.pop("points", None)  # Extract points if present
+        
+        # Validate trail data with schema
         data = trail_schema.load(body)
 
         # Set timestamps
         now = datetime.utcnow().replace(microsecond=0)
 
-        # Use raw SQL to insert (avoids pyodbc DECIMAL bug)
+        # Use raw SQL to insert trail (avoids pyodbc DECIMAL bug)
         query = text("""
             INSERT INTO CW2.Trail 
             (trail_id, trail_name, description, visibility, created_at, updated_at, 
@@ -152,19 +155,78 @@ def create_trail(body):
             "created_by": data["created_by"]
         })
 
+        # Handle trail points if provided
+        if points_data and isinstance(points_data, list) and len(points_data) > 0:
+            # Get last trail point ID to generate next IDs
+            last_point = (
+                db.session.query(Trail_Point)
+                .order_by(Trail_Point.trail_point_id.desc())
+                .first()
+            )
+            
+            if last_point:
+                next_point_num = int(last_point.trail_point_id[2:]) + 1
+            else:
+                next_point_num = 1
+
+            # Insert each point
+            for point in points_data:
+                point_id = f"TP{next_point_num:06d}"
+                
+                # Validate point has required fields
+                if "latitude" not in point or "longitude" not in point or "sequence_no" not in point:
+                    db.session.rollback()
+                    return {"error": "Each point must have latitude, longitude, and sequence_no"}, 400
+                
+                point_query = text("""
+                    INSERT INTO CW2.Trail_Point 
+                    (trail_point_id, trail_id, latitude, longitude, sequence_no)
+                    VALUES (:point_id, :trail_id, :latitude, :longitude, :sequence_no)
+                """)
+                
+                db.session.execute(point_query, {
+                    "point_id": point_id,
+                    "trail_id": trail_id,
+                    "latitude": float(point["latitude"]),
+                    "longitude": float(point["longitude"]),
+                    "sequence_no": int(point["sequence_no"])
+                })
+                
+                next_point_num += 1
+
         db.session.commit()
 
-        # Fetch the created trail to return
+        # Fetch the created trail with points to return
         created_trail = Trail.query.get(trail_id)
-        return trail_schema.dump(created_trail), 201
+        trail_data = trail_schema.dump(created_trail)
+        
+        # Add points to response
+        points = Trail_Point.query.filter_by(trail_id=trail_id)\
+                                  .order_by(Trail_Point.sequence_no).all()
+        trail_data["points"] = trail_points_schema.dump(points)
+        
+        return trail_data, 201
 
     except IntegrityError as e:
         db.session.rollback()
-        return {"error": "Integrity error", "details": str(e.orig)}, 400
+        error_msg = str(e.orig).lower()
+        
+        # Check for specific constraint violations
+        if "unique" in error_msg or "duplicate" in error_msg:
+            if "trail_name" in error_msg or "uq_trail_name" in error_msg:
+                return {"error": "Trail with this name already exists"}, 409
+            elif "sequence_no" in error_msg:
+                return {"error": "Duplicate sequence number in trail points"}, 400
+        
+        return {"error": "Data integrity violation", "details": str(e.orig)}, 400
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        return {"error": "Database error", "details": str(e)}, 500
+        return {"error": "Database error occurred", "details": str(e)}, 500
+
+    except Exception as e:
+        db.session.rollback()
+        return {"error": "Unexpected error", "details": str(e)}, 500
 
 
 def update_trail(trail_id, body):
@@ -208,15 +270,27 @@ def update_trail(trail_id, body):
 
         # Fetch updated trail to return
         updated_trail = Trail.query.get(trail_id)
-        return trail_schema.dump(updated_trail), 200
+        trail_data = trail_schema.dump(updated_trail)
+        
+        # Add points to response
+        points = Trail_Point.query.filter_by(trail_id=trail_id)\
+                                  .order_by(Trail_Point.sequence_no).all()
+        trail_data["points"] = trail_points_schema.dump(points)
+        
+        return trail_data, 200
 
     except IntegrityError as e:
         db.session.rollback()
-        return {"error": "Integrity error", "details": str(e.orig)}, 400
+        error_msg = str(e.orig).lower()
+        
+        if "unique" in error_msg or "duplicate" in error_msg:
+            return {"error": "Trail with this name already exists"}, 409
+            
+        return {"error": "Data integrity violation", "details": str(e.orig)}, 400
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        return {"error": "Database error", "details": str(e)}, 500
+        return {"error": "Database error occurred", "details": str(e)}, 500
 
 
 def delete_trail(trail_id):
@@ -232,4 +306,4 @@ def delete_trail(trail_id):
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        return {"error": "Database error", "details": str(e)}, 500
+        return {"error": "Database error occurred", "details": str(e)}, 500
