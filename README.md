@@ -75,7 +75,7 @@ python app.py
 ## 🔗 API Endpoints
 
 ### Authentication
-- POST /login - Authenticate user via external COMP2001 API
+- 'POST /login' - Authenticate user via external COMP2001 API
   
 ### Trails
 - `GET /trails` - List all trails
@@ -85,10 +85,10 @@ python app.py
 - `DELETE /trails/{id}` - Delete trail (requires auth + ownership)
   
 ### Reference Data (Read-Only)
-- GET /reference/locations - Available trail locations
-- GET /reference/routes - Route types
-- GET /reference/difficulties - Difficulty levels
-- GET /reference/features - Trail features
+- 'GET /reference/locations' - Available trail locations
+- 'GET /reference/routes' - Route types
+- 'GET /reference/difficulties' - Difficulty levels
+- 'GET /reference/features' - Trail features
 
 
 ## 🛠️Testing
